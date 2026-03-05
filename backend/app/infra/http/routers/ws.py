@@ -30,8 +30,11 @@ async def websocket_endpoint(
         await websocket.close(code=4003, reason="Not a member of this list")
         return
 
-    # 3. Accept and register in room
-    await manager.connect(list_id, user_id, websocket)
+    # 3. Accept and register in room (retorna False se limite de conexões atingido)
+    connected = await manager.connect(list_id, user_id, websocket)
+    if not connected:
+        return
+
     try:
         while True:
             # Keep connection alive; client sends pings if needed

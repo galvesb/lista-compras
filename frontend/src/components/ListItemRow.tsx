@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { itemsApi } from '../api/items'
+import { useAuth } from '../context/AuthContext'
 import { Avatar } from './Avatar'
 import { CheckModal } from './CheckModal'
 import type { ListItem, Member } from '../types'
@@ -16,15 +17,28 @@ export function ListItemRow({ item, listId, isOwner, members }: ListItemRowProps
   const [showCheckModal, setShowCheckModal] = useState(false)
   const [showAssignMenu, setShowAssignMenu] = useState(false)
   const queryClient = useQueryClient()
+  const { user } = useAuth()
 
-  // Update item in all filter variants immediately (no network round-trip)
+  // Update item em ambos os caches com lógica filter-aware para 'mine'
   const updateItemInCache = (updated: ListItem) => {
-    for (const f of ['all', 'mine'] as const) {
-      queryClient.setQueryData<ListItem[]>(
-        ['list', listId, 'items', f],
-        (old) => old?.map((i) => (i.id === updated.id ? updated : i))
-      )
-    }
+    // cache 'all': update in-place (item sempre existe aqui)
+    queryClient.setQueryData<ListItem[]>(
+      ['list', listId, 'items', 'all'],
+      (old) => old?.map((i) => (i.id === updated.id ? updated : i))
+    )
+
+    // cache 'mine': add se agora é meu, update se já estava, remove se deixou de ser
+    queryClient.setQueryData<ListItem[]>(
+      ['list', listId, 'items', 'mine'],
+      (old = []) => {
+        const isNowMine = updated.assigned_to?.user_id === user?.id
+        const alreadyInMine = old.some((i) => i.id === updated.id)
+
+        if (isNowMine && !alreadyInMine) return [...old, updated]
+        if (isNowMine && alreadyInMine) return old.map((i) => (i.id === updated.id ? updated : i))
+        return old.filter((i) => i.id !== updated.id)
+      }
+    )
   }
 
   const removeItemFromCache = (itemId: string) => {

@@ -41,8 +41,8 @@ export function ListDetailPage() {
     enabled: !!listId,
   })
 
-  // Real-time updates via WebSocket
-  useListWebSocket(listId!, token)
+  // Real-time updates via WebSocket (userId necessário para lógica filter-aware do cache 'mine')
+  useListWebSocket(listId!, token, user?.id ?? null)
 
   const addItemMutation = useMutation({
     mutationFn: () => itemsApi.add(listId!, newName.trim(), newQty.trim() || '1 un'),

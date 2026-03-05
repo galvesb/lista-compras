@@ -4,7 +4,7 @@ import type { WsEvent, ListItem } from '../types'
 
 const FILTERS = ['all', 'mine'] as const
 
-export function useListWebSocket(listId: string, token: string | null) {
+export function useListWebSocket(listId: string, token: string | null, userId: string | null) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
 
@@ -21,8 +21,7 @@ export function useListWebSocket(listId: string, token: string | null) {
 
       switch (msg.event) {
         case 'item_updated':
-        case 'item_assigned':
-          // Update item in all cached filter variants immediately (no refetch)
+          // Update in-place em ambos os caches (status/price não afeta quem é dono)
           for (const f of FILTERS) {
             queryClient.setQueryData<ListItem[]>(
               ['list', listId, 'items', f],
@@ -30,6 +29,30 @@ export function useListWebSocket(listId: string, token: string | null) {
             )
           }
           break
+
+        case 'item_assigned': {
+          const updated = msg.data
+
+          // cache 'all': update in-place (item sempre existe aqui)
+          queryClient.setQueryData<ListItem[]>(
+            ['list', listId, 'items', 'all'],
+            (old) => old?.map((i) => (i.id === updated.id ? updated : i))
+          )
+
+          // cache 'mine': filter-aware — add se agora é meu, remove se deixou de ser
+          queryClient.setQueryData<ListItem[]>(
+            ['list', listId, 'items', 'mine'],
+            (old = []) => {
+              const isNowMine = updated.assigned_to?.user_id === userId
+              const alreadyInMine = old.some((i) => i.id === updated.id)
+
+              if (isNowMine && !alreadyInMine) return [...old, updated]
+              if (isNowMine && alreadyInMine) return old.map((i) => (i.id === updated.id ? updated : i))
+              return old.filter((i) => i.id !== updated.id)
+            }
+          )
+          break
+        }
 
         case 'item_added':
           // Append to 'all' cache, deduplicating to avoid double-insert
@@ -76,5 +99,5 @@ export function useListWebSocket(listId: string, token: string | null) {
       clearInterval(ping)
       ws.close()
     }
-  }, [listId, token, queryClient])
+  }, [listId, token, userId, queryClient])
 }
