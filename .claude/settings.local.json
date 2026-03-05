@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec new change \"lista-compras-colaborativas\")",
+      "Bash(cat openspec/archive/*.md)",
+      "Bash(npx openspec)",
+      "Bash(npm install -g @openspec/cli)",
+      "Bash(while read dir)",
+      "Bash(do touch \"$dir/__init__.py\")",
+      "Bash(done)",
+      "Bash(ls /home/galvesb/projects/lista-compras/.env*)",
+      "Bash(openspec status --change \"lista-compras-colaborativas\" --json)",
+      "Bash(chmod +x /home/galvesb/projects/lista-compras/scripts/*.sh)"
+    ]
+  }
+}

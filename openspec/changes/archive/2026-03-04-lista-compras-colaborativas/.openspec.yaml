@@ -1,0 +1,14 @@
+change: lista-compras-colaborativas
+schema: spec-driven
+status: proposed
+created_at: "2026-03-04"
+artifacts:
+  - id: proposal
+    file: proposal.md
+    status: done
+  - id: design
+    file: design.md
+    status: done
+  - id: tasks
+    file: tasks.md
+    status: done
