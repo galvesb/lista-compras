@@ -41,7 +41,7 @@ export function ListsPage() {
     <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '80px' }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 16px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px' }}>🛒 Minhas Listass</h1>
+        <h1 style={{ margin: 0, fontSize: '20px' }}>🛒 Minhas Listas</h1>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span style={{ fontSize: '14px', color: '#6b7280' }}>{user?.name}</span>
           <button onClick={logout} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '13px' }}>
