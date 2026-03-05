@@ -142,7 +142,7 @@ export function ListItemRow({ item, listId, isOwner, members }: ListItemRowProps
             style={assignBtn}
             title="Atribuir a um colaborador"
           >
-            👤+
+            👤
           </button>
         ) : null}
 

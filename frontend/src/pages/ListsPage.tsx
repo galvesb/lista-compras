@@ -153,6 +153,7 @@ const fabStyle: React.CSSProperties = {
   width: '56px', height: '56px', borderRadius: '50%',
   background: '#6366f1', color: '#fff', border: 'none',
   fontSize: '28px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.4)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
 
 const overlay: React.CSSProperties = {
