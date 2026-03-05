@@ -1,6 +1,7 @@
 # Environment
 .env
 *.env
+.make.env
 !.env.example
 
 # Python
