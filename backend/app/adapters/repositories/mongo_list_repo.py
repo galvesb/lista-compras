@@ -20,6 +20,7 @@ def _doc_to_list(doc: dict) -> ShoppingList:
         source_list_id=str(doc["source_list_id"]) if doc.get("source_list_id") else None,
         created_at=doc["created_at"],
         archived_at=doc.get("archived_at"),
+        deleted_at=doc.get("deleted_at"),
     )
 
 
@@ -46,11 +47,13 @@ class MongoListRepository(ListRepository):
     async def find_by_id(self, list_id: str) -> ShoppingList | None:
         if not ObjectId.is_valid(list_id):
             return None
-        doc = await self._col.find_one({"_id": ObjectId(list_id)})
+        # Filtra listas excluídas via soft delete
+        doc = await self._col.find_one({"_id": ObjectId(list_id), "deleted_at": None})
         return _doc_to_list(doc) if doc else None
 
     async def find_by_user(self, user_id: str, status: ListStatus | None = None) -> list[ShoppingList]:
-        query: dict = {"owner_id": ObjectId(user_id)}
+        # Filtra listas excluídas via soft delete
+        query: dict = {"owner_id": ObjectId(user_id), "deleted_at": None}
         if status:
             query["status"] = status
         cursor = self._col.find(query).sort("created_at", -1)
@@ -58,8 +61,16 @@ class MongoListRepository(ListRepository):
 
     async def update_status_archived(self, list_id: str, total_cost: float) -> ShoppingList | None:
         doc = await self._col.find_one_and_update(
-            {"_id": ObjectId(list_id), "status": ListStatus.ACTIVE},
+            {"_id": ObjectId(list_id), "status": ListStatus.ACTIVE, "deleted_at": None},
             {"$set": {"status": ListStatus.ARCHIVED, "total_cost": total_cost, "archived_at": datetime.now(UTC)}},
             return_document=True,
         )
         return _doc_to_list(doc) if doc else None
+
+    async def soft_delete(self, list_id: str) -> bool:
+        """Define deleted_at apenas se a lista ainda não foi excluída."""
+        result = await self._col.update_one(
+            {"_id": ObjectId(list_id), "deleted_at": None},
+            {"$set": {"deleted_at": datetime.now(UTC)}},
+        )
+        return result.modified_count > 0

@@ -16,3 +16,4 @@ class ShoppingList(BaseModel):
     source_list_id: str | None = None
     created_at: datetime
     archived_at: datetime | None = None
+    deleted_at: datetime | None = None

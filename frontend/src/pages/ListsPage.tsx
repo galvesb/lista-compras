@@ -37,6 +37,13 @@ export function ListsPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (listId: string) => api.delete(`/lists/${listId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
+    },
+  })
+
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '80px' }}>
       {/* Top bar */}
@@ -87,6 +94,22 @@ export function ListsPage() {
                   style={reuseBtn}
                 >
                   Reutilizar
+                </button>
+              )}
+              {/* Botão lixeira — visível APENAS para o dono da lista */}
+              {list.role === 'owner' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (confirm(`Excluir "${list.store_name}"? Esta ação não pode ser desfeita.`)) {
+                      deleteMutation.mutate(list.id)
+                    }
+                  }}
+                  style={deleteCardBtn}
+                  title="Excluir lista"
+                  disabled={deleteMutation.isPending}
+                >
+                  🗑
                 </button>
               )}
               <span style={{ color: '#d1d5db' }}>›</span>
@@ -184,4 +207,11 @@ const confirmBtn: React.CSSProperties = {
 const reuseBtn: React.CSSProperties = {
   background: '#f0f9ff', color: '#0369a1', border: '1.5px solid #bae6fd',
   borderRadius: '8px', padding: '4px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+}
+
+const deleteCardBtn: React.CSSProperties = {
+  background: 'transparent', border: 'none', color: '#fca5a5',
+  cursor: 'pointer', fontSize: '16px', padding: '4px',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  flexShrink: 0,
 }

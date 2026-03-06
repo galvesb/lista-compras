@@ -198,6 +198,26 @@ export function ListDetailPage() {
         </div>
       )}
 
+      {/* Delete button (owner only) */}
+      {isOwner && (
+        <div style={{ padding: '0 16px 24px', textAlign: 'center' }}>
+          <button
+            onClick={() => {
+              if (confirm(`Excluir "${listData.store_name}"? Esta ação é permanente e não pode ser desfeita.`)) {
+                api.delete(`/lists/${listId}`).then(() => {
+                  queryClient.removeQueries({ queryKey: ['list', listId] })
+                  queryClient.invalidateQueries({ queryKey: ['lists'] })
+                  navigate('/lists')
+                })
+              }
+            }}
+            style={deleteBtnStyle}
+          >
+            Excluir lista
+          </button>
+        </div>
+      )}
+
       {/* Invite member modal */}
       {showInvite && (
         <InviteMemberModal listId={listId!} onClose={() => setShowInvite(false)} />
@@ -262,6 +282,9 @@ const addBtnStyle: React.CSSProperties = {
   fontWeight: 700,
   cursor: 'pointer',
   flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }
 
 const totalBarStyle: React.CSSProperties = {
@@ -282,6 +305,17 @@ const archiveBtnStyle: React.CSSProperties = {
   padding: '10px 24px',
   fontWeight: 600,
   fontSize: '14px',
+  cursor: 'pointer',
+}
+
+const deleteBtnStyle: React.CSSProperties = {
+  background: 'transparent',
+  color: '#dc2626',
+  border: '1.5px solid #fecaca',
+  borderRadius: '10px',
+  padding: '8px 20px',
+  fontWeight: 600,
+  fontSize: '13px',
   cursor: 'pointer',
 }
 

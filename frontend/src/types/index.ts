@@ -61,3 +61,4 @@ export type WsEvent =
   | { event: 'member_joined'; data: Member }
   | { event: 'member_removed'; data: { user_id: string } }
   | { event: 'list_archived'; data: { total_cost: number } }
+  | { event: 'list_deleted'; data: { list_id: string } }

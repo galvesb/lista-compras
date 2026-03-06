@@ -18,3 +18,10 @@ class ListRepository(ABC):
     async def update_status_archived(
         self, list_id: str, total_cost: float
     ) -> ShoppingList | None: ...
+
+    @abstractmethod
+    async def soft_delete(self, list_id: str) -> bool:
+        """
+        Marca a lista como excluída (deleted_at = now()).
+        Retorna True se encontrou e atualizou; False se não encontrou.
+        """

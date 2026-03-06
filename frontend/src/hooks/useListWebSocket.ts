@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import type { WsEvent, ListItem } from '../types'
 
@@ -6,6 +7,7 @@ const FILTERS = ['all', 'mine'] as const
 
 export function useListWebSocket(listId: string, token: string | null, userId: string | null) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
@@ -86,6 +88,16 @@ export function useListWebSocket(listId: string, token: string | null, userId: s
           queryClient.invalidateQueries({ queryKey: ['lists'] })
           queryClient.invalidateQueries({ queryKey: ['list', listId] })
           break
+
+        case 'list_deleted':
+          // Remove os dados desta lista do cache — sem refetch (404 seria retornado)
+          queryClient.removeQueries({ queryKey: ['list', listId] })
+          queryClient.removeQueries({ queryKey: ['list', listId, 'items'] })
+          // Invalida a listagem para remover o card da home
+          queryClient.invalidateQueries({ queryKey: ['lists'] })
+          // Redireciona sem deixar histórico desta lista (replace)
+          navigate('/lists', { replace: true })
+          break
       }
     }
 
@@ -99,5 +111,5 @@ export function useListWebSocket(listId: string, token: string | null, userId: s
       clearInterval(ping)
       ws.close()
     }
-  }, [listId, token, userId, queryClient])
+  }, [listId, token, userId, queryClient, navigate])
 }

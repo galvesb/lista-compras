@@ -23,6 +23,7 @@ from app.infra.http.schemas.list import (
 from app.infra.websocket.connection_manager import manager
 from app.use_cases.lists.archive_list import ArchiveListUC
 from app.use_cases.lists.create_list import CreateListUC
+from app.use_cases.lists.delete_list import DeleteListUC
 from app.use_cases.lists.reuse_list import ReuseListUC
 
 router = APIRouter(prefix="/lists", tags=["lists"])
@@ -182,3 +183,32 @@ async def reuse_list(
         created_at=sl.created_at,
         role="owner",
     )
+
+
+@router.delete("/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_list(
+    list_id: str = Path(...),
+    current_user: User = Depends(get_current_user),
+    membership: ListMember = Depends(require_list_owner),  # 403 se não for owner
+) -> None:
+    """
+    Soft delete de uma lista. Restrito ao dono (owner).
+
+    Proteção anti-IDOR em duas camadas:
+      1. require_list_owner verifica membership + role no banco
+      2. DeleteListUC verifica owner_id no domínio (defense-in-depth)
+
+    O payload do broadcast WebSocket contém apenas list_id —
+    sem dados sensíveis de usuários ou tokens.
+    """
+    db = get_database()
+    uc = DeleteListUC(MongoListRepository(db))
+    try:
+        await uc.execute(list_id, current_user.id)
+    except NotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ForbiddenError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+
+    # Payload mínimo — apenas list_id, sem dados sensíveis
+    await manager.broadcast(list_id, "list_deleted", {"list_id": list_id})
